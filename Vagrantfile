@@ -1,6 +1,8 @@
-$num_nodes = 2
+$num_etcd = 3
+$num_master = 3
+$num_nodes = 3
 $vm_cpus = 2
-$vm_memory = 4096
+$vm_memory = 2048
 $vm_box = "centos/7"
 $vm_box_version = "1802.01"
 #$vm_box = "Iorek/k8svirtualbox"
@@ -13,57 +15,98 @@ $vm_name_tpl = "vg-k8s-%s"
 $docker_registry="iorek"
 
 Vagrant.configure("2") do |config|
-	config.vm.define "master", primary: true do |master|
-		master.vm.box = $vm_box
-		master.vm.box_version = $vm_box_version
+	(1..$num_etcd).each do |i|	
+		config.vm.define "etcd#{i}", primary: true do |etcd|
+			etcd.vm.box = $vm_box
+			etcd.vm.box_version = $vm_box_version
 
-		master.vm.box_check_update = false
-	  
-		master.vm.hostname = $vm_name_tpl % "master"
-	  
-		master.vm.network "private_network", ip: $k8s_master_ip
-
-		master.vm.provider "virtualbox" do |vb|
-			vb.name = $vm_name_tpl % "master"
-			vb.memory = $vm_memory
-			vb.cpus = $vm_cpus
-			vb.gui = false
-		end
-		
-		master.vm.provision :shell, :path => 'preflight.sh', :args => [$k8s_version, $docker_registry]
-		
-		master.vm.provision :shell, :path => 'pull-docker-images.sh', :args => [$docker_registry]
-		
-		master.vm.provision :shell, :path => 'init-master.sh', :args => [$k8s_master_ip, $k8s_version, $docker_registry]
-	end
-	
-	(1..$num_nodes).each do |i|
-		config.vm.define "node#{i}" do |node|
-			node.vm.box = $vm_box
-			node.vm.box_version = $vm_box_version
-
-			node.vm.box_check_update = false
+			etcd.vm.box_check_update = false
 		  
-			node.vm.hostname = $vm_name_tpl % "node-#{i}"
+			etcd.vm.hostname = "etcd#{i}"
 		  
-			node.vm.network "private_network", ip: $k8s_cluster_ip_tpl % "#{i+10}"
+			etcd.vm.network "private_network", ip: $k8s_cluster_ip_tpl % "#{i+10}"
 
-			node.vm.provider "virtualbox" do |vb|
-				vb.name = $vm_name_tpl % "node-#{i}"
+			etcd.vm.provider "virtualbox" do |vb|
+				vb.name = $vm_name_tpl % "etcd-#{i}"
 				vb.memory = $vm_memory
 				vb.cpus = $vm_cpus
 				vb.gui = false
 			end
 			
-			node.vm.provision :shell, :path => 'preflight.sh', :args => [$k8s_version, $docker_registry]
+			etcd.vm.provision :shell, :path => 'preflight-etcd.sh'
 			
-			node.vm.provision :shell, :path => 'pull-docker-images.sh', :args => [$docker_registry]
+			if i == 1
+				etcd.vm.provision :shell, :path => 'generate-etcd-certs.sh'
+			else
+				etcd.vm.provision :shell, :path => 'setup-etcd-nodes.sh'
+			end
 			
-			node.vm.provision "shell", inline: <<-SHELL
-				echo "initialize node-#{i}"
-			SHELL
-			
-			node.vm.provision :shell, :path => "join-cluster.sh", :args => [$k8s_master_ip]
+			etcd.trigger.after :up do
+				run_remote  "bash /vagrant/run-etcd.sh"  
+			end
 		end
 	end
+	
+	
+#	(1..$num_etcd).each do |i|	
+#		config.vm.define "etcd#{i}", primary: true do |etcd|
+#			etcd.vm.provision :shell, :path => 'run-etcd.sh'
+#		end
+#	end
+	
+#	(1..$num_master).each do |i|
+#		config.vm.define "master#{i}", primary: true do |master|
+#			master.vm.box = $vm_box
+#			master.vm.box_version = $vm_box_version
+#
+#			master.vm.box_check_update = false
+#		  
+#			master.vm.hostname = "master#{i}"
+#		  
+#			master.vm.network "private_network", ip: $k8s_cluster_ip_tpl % "#{i+20}"
+#
+#			master.vm.provider "virtualbox" do |vb|
+#				vb.name = $vm_name_tpl % "master-#{i}"
+#				vb.memory = $vm_memory
+#				vb.cpus = $vm_cpus
+#				vb.gui = false
+#			end
+#			
+#			master.vm.provision :shell, :path => 'preflight.sh', :args => [$k8s_version, $docker_registry]
+#			
+#			master.vm.provision :shell, :path => 'pull-docker-images.sh', :args => [$docker_registry]
+#			
+#			master.vm.provision :shell, :path => 'init-master.sh', :args => [$k8s_master_ip, $k8s_version, $docker_registry]
+#		end
+#	end
+#	
+#	(1..$num_nodes).each do |i|
+#		config.vm.define "node#{i}" do |node|
+#			node.vm.box = $vm_box
+#			node.vm.box_version = $vm_box_version
+#
+#			node.vm.box_check_update = false
+#		  
+#			node.vm.hostname = "node#{i}"
+#		  
+#			node.vm.network "private_network", ip: $k8s_cluster_ip_tpl % "#{i+30}"
+#
+#			node.vm.provider "virtualbox" do |vb|
+#				vb.name = $vm_name_tpl % "node-#{i}"
+#				vb.memory = $vm_memory
+#				vb.cpus = $vm_cpus
+#				vb.gui = false
+#			end
+#			
+#			node.vm.provision :shell, :path => 'preflight.sh', :args => [$k8s_version, $docker_registry]
+#			
+#			node.vm.provision :shell, :path => 'pull-docker-images.sh', :args => [$docker_registry]
+#			
+#			node.vm.provision "shell", inline: <<-SHELL
+#				echo "initialize node#{i}"
+#			SHELL
+#			
+#			node.vm.provision :shell, :path => "join-cluster.sh", :args => [$k8s_master_ip]
+#		end
+#	end
 end
