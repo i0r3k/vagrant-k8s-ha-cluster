@@ -55,3 +55,14 @@ systemctl start etcd &
 
 # check status
 #systemctl status etcd -l
+
+cat > ~/get-etcd-cluster-info.sh <<EOF
+/usr/local/bin/etcdctl \
+  --endpoints=https://$PRIVATE_IP:2379  \
+  --ca-file=/etc/kubernetes/pki/etcd/ca.pem \
+  --cert-file=/etc/kubernetes/pki/etcd/client.pem \
+  --key-file=/etc/kubernetes/pki/etcd/client-key.pem \
+  cluster-health
+EOF
+
+chmod a+x ~/get-etcd-cluster-info.sh

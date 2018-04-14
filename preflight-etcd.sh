@@ -78,3 +78,5 @@ export ETCD_VERSION=v3.1.12
 
 cp -fv /vagrant/etcd/${ETCD_VERSION}/* /usr/local/bin
 chmod +x /usr/local/bin/etcd*
+
+echo "PATH=/usr/local/bin:$PATH" >> ~/.bashrc

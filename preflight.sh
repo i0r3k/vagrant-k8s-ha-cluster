@@ -76,11 +76,18 @@ systemctl enable kubelet && systemctl start kubelet
 tee /etc/hosts <<-'EOF'
 127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
 ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
-192.168.33.10 vg-k8s-master
-192.168.33.11 vg-k8s-node-1
-192.168.33.12 vg-k8s-node-2
-192.168.33.13 vg-k8s-node-3
+192.168.33.11 etcd1
+192.168.33.12 etcd2
+192.168.33.13 etcd3
+192.168.33.21 master1
+192.168.33.22 master2
+192.168.33.23 master3
+192.168.33.31 node1
+192.168.33.32 node2
+192.168.33.33 node3
 EOF
+
+ssh-keygen -t rsa -b 4096 -C "ericlin0625@me.com" -f ~/.ssh/id_rsa -N ''
 
 # create regular user(no need for provisoning with vagrant)
 #useradd -U k8s

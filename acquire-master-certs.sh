@@ -5,8 +5,8 @@ echo "master1" > ~/server.txt
 mkdir -p ~/.ssh/ && echo "# known hosts" >> ~/.ssh/known_hosts
 ssh-keyscan -f ~/server.txt >> ~/.ssh/known_hosts
 
-# get the join command
-sshpass -p "vagrant" scp vagrant@master1:/home/vagrant/join.txt ~/join.txt
+sshpass -p "vagrant" ssh-copy-id root@master1
 
-# join cluster
-source ~/join.txt
+mkdir -p /etc/kubernetes/pki/etcd
+scp -r root@master1:/etc/kubernetes/pki /etc/kubernetes
+rm /etc/kubernetes/pki/apiserver.*
