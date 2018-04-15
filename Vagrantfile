@@ -98,17 +98,17 @@ Vagrant.configure("2") do |config|
 				vb.gui = false
 			end
 			
-			node.vm.provision :shell, :path => 'preflight.sh', :args => [$k8s_version, $docker_registry]
-			#node.vm.provision :shell, :path => 'pull-docker-images.sh', :args => [$docker_registry]
+			node.vm.provision :shell, :path => 'preflight.sh', :name => 'preflight.sh', :args => [$k8s_version, $docker_registry]
+			#node.vm.provision :shell, :path => 'pull-docker-images.sh', :name => 'pull-docker-images.sh', :args => [$docker_registry]
 			
-			node.vm.provision "shell", inline: <<-SHELL
+			node.vm.provision "shell", :name => 'inline-shell', inline: <<-SHELL
 				echo "initialize node#{i}"
 			SHELL
 			
-			node.vm.provision :shell, :path => 'join-cluster.sh'
+			node.vm.provision :shell, :path => 'join-cluster.sh', :name => 'join-cluster.sh'
 			
-			if i == 3
-				node.vm.provision :shell, :path => 'configure-cluster.sh', :args => [$virtual_ip]
+			if i == $num_nodes
+				node.vm.provision :shell, :path => 'configure-cluster.sh', :name => 'configure-cluster.sh', :args => [$virtual_ip]
 			end
 		end
 	end

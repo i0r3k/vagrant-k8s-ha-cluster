@@ -2,6 +2,9 @@
 
 VIRTUAL_IP=$1
 
+whoami
+pwd
+env
 #Reconfigure kube-proxy to access kube-apiserver via the load balancer:
 kubectl get configmap -n kube-system kube-proxy -o yaml > kube-proxy-cm.yaml
 sed -i "s#server:.*#server: https://$VIRTUAL_IP:6443#g" kube-proxy-cm.yaml

@@ -21,8 +21,7 @@ sshpass -p "vagrant" ssh-copy-id root@master3
 sshpass -p "vagrant" ssh-copy-id root@node1
 sshpass -p "vagrant" ssh-copy-id root@node2
 
-
-ssh root@master1 "/vagrant/scripts/reconfigure-kube-proxy.sh $VIRTUAL_IP"
+ssh root@master1 "export KUBECONFIG=/etc/kubernetes/admin.conf; /vagrant/scripts/reconfigure-kube-proxy.sh $VIRTUAL_IP"
 
 ssh root@master1 "/vagrant/scripts/reconfigure-kubelet.sh $VIRTUAL_IP"
 ssh root@master2 "/vagrant/scripts/reconfigure-kubelet.sh $VIRTUAL_IP"
